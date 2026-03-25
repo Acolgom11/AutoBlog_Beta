@@ -10,7 +10,7 @@
 }
 
 :root {
-  --background: #fafafa;
+  --background: #ffffff;
   --foreground: #111111;
   --card: #ffffff;
   --card-foreground: #111111;
@@ -20,10 +20,10 @@
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #0f0f0f;
+  --foreground: #f5f5f5;
   --card: #18181b;
-  --card-foreground: #fafafa;
+  --card-foreground: #f5f5f5;
   --border: #27272a;
   --muted: #27272a;
   --muted-foreground: #a1a1aa;

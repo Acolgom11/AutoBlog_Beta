@@ -5,9 +5,14 @@ import { getSession } from './lib/session';
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  if (path.startsWith('/admin') && path !== '/admin/login') {
+  const isProtectedRoute = path.startsWith('/admin') || path.startsWith('/api/posts');
+
+  if (isProtectedRoute && path !== '/admin/login') {
     const session = await getSession();
     if (!session || !session.authenticated) {
+      if (path.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       const loginUrl = new URL('/admin/login', request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -17,5 +22,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/posts/:path*'],
 };

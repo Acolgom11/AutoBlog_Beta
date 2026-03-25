@@ -5,17 +5,21 @@ import { CalendarDays, Clock, User } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
+import Link from "next/link";
 
 import { supabasePublic } from "@/lib/supabasePublic";
+import { Button } from "@/components/ui/Button";
 import { AdComponent } from "@/components/ads/AdComponent";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TableOfContents } from "@/components/ui/TableOfContents";
 import { Ad } from "@/components/mdx/Ad";
+import { getSession } from "@/lib/session";
 import dynamic from "next/dynamic";
 import { RelatedPostsSkeleton } from "@/components/blog/RelatedPosts";
 import { extractToc } from "@/lib/toc";
 import { Post } from "@/types/post";
+import { getRelatedPosts } from "@/lib/recommendations";
 
 // Función auxiliar para calcular tiempo de lectura
 const calculateReadTime = (content: string) => {
@@ -77,30 +81,40 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
+  if (post.published === false) {
+    const session = await getSession();
+    if (!session || !session.authenticated) {
+      notFound();
+    }
+  }
+
   // Calcular readTime si no está en la tabla
   const readTime = post.read_time || calculateReadTime(post.content);
 
   // Extraer TOC del contenido
   const toc = await extractToc(post.content);
 
-  // Obtener artículos relacionados (misma categoría, excluyendo el actual)
-  const { data: relatedPosts } = await supabasePublic
+  // OBTENER POSTS RELACIONADOS: fetch todos, filter, score
+  const { data: allPosts } = await supabasePublic
     .from('posts')
     .select('*')
-    .eq('category', post.category)
-    .neq('slug', post.slug)
-    .limit(3);
+    .eq('published', true);
 
-  // Mapear relacionados al formato esperado por RelatedPosts (si el componente espera ArticleCard props)
-  const relatedArticles = relatedPosts?.map(rel => ({
-    slug: rel.slug,
-    title: rel.title,
-    description: rel.content ? rel.content.substring(0, 160) : '',
-    date: rel.created_at,
-    imageUrl: rel.image || '',
-    category: rel.category,
-    readTime: rel.read_time || calculateReadTime(rel.content),
-  })) || [];
+  let relatedArticles: any[] = [];
+  if (allPosts) {
+    const recommended = getRelatedPosts(post, allPosts);
+    relatedArticles = recommended.map(rel => ({
+      slug: rel.slug,
+      title: rel.title,
+      description: rel.content ? rel.content.substring(0, 160) : '',
+      date: rel.created_at,
+      imageUrl: rel.image || '',
+      category: rel.category,
+      readTime: rel.read_time || calculateReadTime(rel.content),
+      keywords: rel.tags || [],
+      author: rel.author || "AutoBlog Editor",
+    }));
+  }
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -221,7 +235,15 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
              />
           </div>
 
-          <AdComponent slotId="article-bottom" className="mt-16 mb-8" />
+          <div className="mt-10 mb-6 text-center">
+            <Link href="/blog">
+              <Button className="w-full sm:w-auto text-lg font-bold px-8 py-6 rounded-full">
+                🚗 Ver Más Coches y Reseñas
+              </Button>
+            </Link>
+          </div>
+
+          <AdComponent slotId="article-bottom" className="mt-8 mb-8" />
 
           <div className="mt-12 p-8 bg-card border border-border rounded-xl flex items-start gap-6 shadow-sm">
             <div className="bg-muted w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0">

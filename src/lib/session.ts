@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 const secretKey = process.env.SESSION_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
-const COOKIE_NAME = 'admin_session';
+const COOKIE_NAME = 'admin';
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface SessionPayload {
@@ -43,7 +43,7 @@ export async function createSession(): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
   });
   console.log('cookie guardada');

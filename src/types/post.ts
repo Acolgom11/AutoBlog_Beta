@@ -7,6 +7,9 @@ export interface Post {
   tags: string[];
   image?: string;
   created_at: string;
+  published?: boolean;
+  author?: string;
+  read_time?: string;
 }
 
 export interface PostInput {
@@ -16,4 +19,5 @@ export interface PostInput {
   category: string;
   tags: string[];
   image: string | null;
+  published: boolean;
 }
